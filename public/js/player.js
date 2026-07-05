@@ -10,34 +10,53 @@ let adTimerInterval = null;
 let tvStarted = false;
 
 // 1. Fetch Playlist, Ads, and Logo
-Promise.all([
-    fetch('/api/videos').then(res => res.json()),
-    fetch('/api/ads').then(res => res.json()),
-    fetch('/api/settings/logo_url').then(res => res.json())
-]).then(([videos, ads, logo]) => {
-    playlist = videos;
-    adList = ads;
-    
-    // Set dynamic logo
-    if (logo && logo.value) {
-        document.querySelector('#channel-logo img').src = logo.value;
-    }
-});
+function fetchContent() {
+    return Promise.all([
+        fetch('/api/videos').then(res => res.json()),
+        fetch('/api/ads').then(res => res.json()),
+        fetch('/api/settings/logo_url').then(res => res.json())
+    ]).then(([videos, ads, logo]) => {
+        playlist = videos;
+        adList = ads;
+        
+        if (logo && logo.value) {
+            document.querySelector('#channel-logo img').src = logo.value;
+        }
+    });
+}
+
+// Initial fetch
+fetchContent();
 
 function startTV() {
     if (tvStarted) return;
     tvStarted = true;
     document.getElementById('start-overlay').style.display = 'none';
 
+    checkAndPlay();
+
+    // Start 5-min Ad loop
+    setInterval(triggerAd, 5 * 60 * 1000);
+    
+    // Poll for new playlist updates every 15 seconds
+    setInterval(() => {
+        fetchContent().then(() => {
+            // If we were stuck on No Signal but now have videos, start playing!
+            if (playlist.length > 0 && document.getElementById('video-title').innerText === "No Signal (Empty Playlist)") {
+                playVideoFromPlaylist();
+            }
+        });
+    }, 15000);
+}
+
+function checkAndPlay() {
     if (playlist.length > 0) {
         playVideoFromPlaylist();
     } else {
         document.getElementById('video-title').innerText = "No Signal (Empty Playlist)";
         showTitleOverlay();
+        // It will recover automatically via the 15s poll
     }
-
-    // Start 5-min Ad loop
-    setInterval(triggerAd, 5 * 60 * 1000);
 }
 
 // Fullscreen request helper

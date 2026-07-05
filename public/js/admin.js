@@ -1,16 +1,22 @@
 let currentPin = '';
 
 async function login() {
-    const pin = document.getElementById('pin-input').value;
+    const pin = document.getElementById('pin-input').value.trim();
+    if (!pin) {
+        alert('Enter your PIN');
+        return;
+    }
     try {
-        const res = await fetch(`/api/admin/login?pin=${pin}`, { method: 'POST' });
+        const res = await fetch(`/api/admin/login?pin=${encodeURIComponent(pin)}`, { method: 'POST' });
         if (res.ok) {
             currentPin = pin;
             document.getElementById('login-section').classList.add('hidden');
             document.getElementById('dashboard-section').classList.remove('hidden');
             loadDashboard();
-        } else {
+        } else if (res.status === 401) {
             alert('Invalid PIN');
+        } else {
+            alert(`Server error (${res.status}). Please try again.`);
         }
     } catch (e) {
         alert('Login failed');

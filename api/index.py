@@ -7,8 +7,6 @@ from fastapi.responses import FileResponse
 from . import models, schemas, database
 import os
 
-models.Base.metadata.create_all(bind=database.engine)
-
 app = FastAPI(title="Linear TV Channel API")
 
 app.add_middleware(
@@ -64,9 +62,10 @@ def read_setting(key: str, db: Session = Depends(get_db)):
         return {"key": key, "value": ""} # Return empty if not found
     return setting
 
-# Admin endpoints (protected by PIN 4333)
+# Admin endpoints. Configure ADMIN_PIN in Vercel for production.
 def verify_pin(pin: str):
-    if pin != "4333":
+    expected_pin = os.getenv("ADMIN_PIN", "4333").strip()
+    if pin.strip() != expected_pin:
         raise HTTPException(status_code=401, detail="Invalid PIN")
 
 @app.post("/api/admin/login")

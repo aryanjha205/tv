@@ -1,22 +1,55 @@
-let currentVideo = null;
-let adInterval = null;
+let playlist = [];
+let currentVideoIndex = 0;
+let adList = [];
 let mainVideo = document.getElementById('main-video');
 let ytPlayerDiv = document.getElementById('youtube-player');
 let ytPlayer = null;
 let adVideo = document.getElementById('ad-video');
 let isAdPlaying = false;
 let adTimerInterval = null;
-let adList = [];
+let tvStarted = false;
 
-// Fetch ads
-fetch('/api/ads').then(res => res.json()).then(data => adList = data);
+// 1. Fetch Playlist & Ads
+Promise.all([
+    fetch('/api/videos').then(res => res.json()),
+    fetch('/api/ads').then(res => res.json())
+]).then(([videos, ads]) => {
+    playlist = videos;
+    adList = ads;
+});
 
-function openPlayer(video) {
-    currentVideo = video;
-    document.getElementById('home-screen').classList.remove('active');
-    document.getElementById('player-screen').classList.add('active');
+function startTV() {
+    if (tvStarted) return;
+    tvStarted = true;
+    document.getElementById('start-overlay').style.display = 'none';
+
+    if (playlist.length > 0) {
+        playVideoFromPlaylist();
+    } else {
+        document.getElementById('video-title').innerText = "No Signal (Empty Playlist)";
+        showTitleOverlay();
+    }
+
+    // Start 5-min Ad loop
+    setInterval(triggerAd, 5 * 60 * 1000);
+}
+
+// Fullscreen request helper
+function requestFS() {
+    const el = document.documentElement;
+    if (el.requestFullscreen) {
+        el.requestFullscreen().catch(e=>console.log(e));
+    }
+}
+
+function playVideoFromPlaylist() {
+    if (playlist.length === 0) return;
+    const video = playlist[currentVideoIndex];
     
-    // Play video based on type
+    // Show Title briefly
+    document.getElementById('video-title').innerText = video.title;
+    showTitleOverlay();
+
     if (video.type === 'YOUTUBE') {
         mainVideo.style.display = 'none';
         ytPlayerDiv.style.display = 'block';
@@ -26,13 +59,19 @@ function openPlayer(video) {
         mainVideo.style.display = 'block';
         playNative(video);
     }
-
-    // Start 5 min ad interval
-    adInterval = setInterval(() => {
-        triggerAd();
-    }, 5 * 60 * 1000); // 5 minutes
+    
+    requestFS();
 }
 
+function nextVideo() {
+    currentVideoIndex++;
+    if (currentVideoIndex >= playlist.length) {
+        currentVideoIndex = 0; // Loop back
+    }
+    playVideoFromPlaylist();
+}
+
+// HTML5 Video / HLS / DASH logic
 function playNative(video) {
     if (Hls.isSupported() && video.type === 'HLS') {
         var hls = new Hls();
@@ -48,48 +87,52 @@ function playNative(video) {
         mainVideo.src = video.url;
         mainVideo.play();
     }
-    
-    if (mainVideo.requestFullscreen) {
-        mainVideo.requestFullscreen().catch(e => console.log(e));
-    }
 }
 
+// When Native video ends, play next
+mainVideo.addEventListener('ended', () => {
+    if(!isAdPlaying) nextVideo();
+});
+
+// YouTube Logic
 function playYouTube(url) {
-    // extract ID
     let videoId = url.split('v=')[1] || url.split('/').pop();
     const ampersandPosition = videoId.indexOf('&');
-    if (ampersandPosition !== -1) {
-        videoId = videoId.substring(0, ampersandPosition);
-    }
+    if (ampersandPosition !== -1) videoId = videoId.substring(0, ampersandPosition);
 
     if (!ytPlayer) {
         ytPlayer = new YT.Player('youtube-player', {
             videoId: videoId,
-            playerVars: { 'autoplay': 1, 'controls': 1 },
+            playerVars: { 'autoplay': 1, 'controls': 0, 'disablekb': 1, 'modestbranding': 1 },
+            events: {
+                'onReady': (event) => event.target.playVideo(),
+                'onStateChange': (event) => {
+                    if (event.data === YT.PlayerState.ENDED) {
+                        nextVideo();
+                    }
+                }
+            }
         });
     } else {
         ytPlayer.loadVideoById(videoId);
     }
 }
 
-function closePlayer() {
-    document.getElementById('player-screen').classList.remove('active');
-    document.getElementById('home-screen').classList.add('active');
-    mainVideo.pause();
-    if(ytPlayer && ytPlayer.stopVideo) ytPlayer.stopVideo();
-    
-    clearInterval(adInterval);
-    if(document.fullscreenElement) {
-        document.exitFullscreen().catch(e=>console.log(e));
-    }
+function showTitleOverlay() {
+    const el = document.getElementById('now-playing');
+    el.classList.add('visible');
+    setTimeout(() => {
+        el.classList.remove('visible');
+    }, 5000); // Hide after 5 seconds
 }
 
+// Ad Logic
 function triggerAd() {
-    if (isAdPlaying || adList.length === 0) return;
+    if (isAdPlaying || adList.length === 0 || !tvStarted) return;
     isAdPlaying = true;
     
-    // Pause main content
-    if (currentVideo.type === 'YOUTUBE' && ytPlayer) {
+    const currentVideo = playlist[currentVideoIndex];
+    if (currentVideo && currentVideo.type === 'YOUTUBE' && ytPlayer) {
         ytPlayer.pauseVideo();
     } else {
         mainVideo.pause();
@@ -98,7 +141,6 @@ function triggerAd() {
     const overlay = document.getElementById('ad-overlay');
     overlay.style.display = 'block';
     
-    // Select random ad
     const ad = adList[Math.floor(Math.random() * adList.length)];
     adVideo.src = ad.url || "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_1MB.mp4";
     adVideo.play();
@@ -121,15 +163,14 @@ function endAd() {
     adVideo.pause();
     document.getElementById('ad-overlay').style.display = 'none';
     
-    // Resume content
-    if (currentVideo.type === 'YOUTUBE' && ytPlayer) {
+    const currentVideo = playlist[currentVideoIndex];
+    if (currentVideo && currentVideo.type === 'YOUTUBE' && ytPlayer) {
         ytPlayer.playVideo();
     } else {
         mainVideo.play();
     }
 }
 
-// Ensure YT API is ready
 function onYouTubeIframeAPIReady() {
-    console.log("YouTube API Ready");
+    // API ready
 }

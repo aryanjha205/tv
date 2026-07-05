@@ -6,30 +6,13 @@ class VideoBase(BaseModel):
     description: Optional[str] = None
     url: str
     type: str
-    banner_url: Optional[str] = None
-    logo_url: Optional[str] = None
-    is_featured: bool = False
-    category_id: Optional[int] = None
+    playlist_order: int = 0
 
 class VideoCreate(VideoBase):
     pass
 
 class Video(VideoBase):
     id: int
-
-    class Config:
-        from_attributes = True
-
-class CategoryBase(BaseModel):
-    name: str
-    order: int = 0
-
-class CategoryCreate(CategoryBase):
-    pass
-
-class Category(CategoryBase):
-    id: int
-    videos: List[Video] = []
 
     class Config:
         from_attributes = True

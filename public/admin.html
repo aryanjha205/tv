@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OTT Admin Dashboard</title>
+    <title>TV Channel Admin</title>
     <link rel="stylesheet" href="/css/style.css">
     <style>
-        body { background: #1a1a1a; padding: 20px; }
+        body { background: #1a1a1a; padding: 20px; color: white; }
         .admin-container { max-width: 800px; margin: 0 auto; background: #2a2a2a; padding: 20px; border-radius: 8px; }
         input, select, button { display: block; width: 100%; margin-bottom: 15px; padding: 10px; border-radius: 4px; border: none; }
         button { background: var(--accent); color: white; cursor: pointer; font-weight: bold; }
@@ -21,36 +21,24 @@
     </div>
 
     <div class="admin-container hidden" id="dashboard-section">
-        <h2>Dashboard</h2>
-        <button onclick="window.location.href='/'">Back to App</button>
+        <h2>TV Channel Dashboard</h2>
+        <button onclick="window.location.href='/'">Go to TV Screen</button>
         
         <hr>
-        <h3>Add Category</h3>
-        <input type="text" id="cat-name" placeholder="Category Name">
-        <input type="number" id="cat-order" placeholder="Order (e.g. 1)">
-        <button onclick="addCategory()">Add Category</button>
-
-        <hr>
-        <h3>Add Video</h3>
-        <input type="text" id="vid-title" placeholder="Title">
-        <input type="text" id="vid-desc" placeholder="Description">
-        <input type="text" id="vid-url" placeholder="Video URL (HLS/MP4/YT)">
+        <h3>Add Video to TV Playlist</h3>
+        <input type="text" id="vid-title" placeholder="Title (Displays on Screen)">
+        <input type="text" id="vid-url" placeholder="Video URL (HLS/MP4/DASH/YT)">
         <select id="vid-type">
             <option value="HLS">HLS</option>
             <option value="MP4">MP4</option>
             <option value="DASH">DASH</option>
             <option value="YOUTUBE">YouTube</option>
         </select>
-        <input type="text" id="vid-banner" placeholder="Banner Image URL">
-        <input type="number" id="vid-cat" placeholder="Category ID">
-        <select id="vid-featured">
-            <option value="false">Not Featured</option>
-            <option value="true">Featured</option>
-        </select>
-        <button onclick="addVideo()">Add Video</button>
+        <input type="number" id="vid-order" placeholder="Playlist Order (e.g. 1)">
+        <button onclick="addVideo()">Add to Playlist</button>
 
         <hr>
-        <h3>Add Advertisement</h3>
+        <h3>Add Advertisement (Runs every 5 mins)</h3>
         <input type="text" id="ad-url" placeholder="Ad Video URL">
         <button onclick="addAd()">Add Advertisement</button>
     </div>

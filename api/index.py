@@ -6,7 +6,7 @@ from . import models, schemas, database
 
 models.Base.metadata.create_all(bind=database.engine)
 
-app = FastAPI(title="OTT Streaming PWA API")
+app = FastAPI(title="Linear TV Channel API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,13 +26,8 @@ def get_db():
 
 @app.get("/api/videos", response_model=List[schemas.Video])
 def read_videos(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    videos = db.query(models.Video).offset(skip).limit(limit).all()
+    videos = db.query(models.Video).order_by(models.Video.playlist_order).offset(skip).limit(limit).all()
     return videos
-
-@app.get("/api/categories", response_model=List[schemas.Category])
-def read_categories(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    categories = db.query(models.Category).order_by(models.Category.order).offset(skip).limit(limit).all()
-    return categories
 
 @app.get("/api/ads", response_model=List[schemas.AdVideo])
 def read_ads(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
@@ -57,15 +52,6 @@ def create_video(video: schemas.VideoCreate, pin: str, db: Session = Depends(get
     db.commit()
     db.refresh(db_video)
     return db_video
-
-@app.post("/api/categories", response_model=schemas.Category)
-def create_category(category: schemas.CategoryCreate, pin: str, db: Session = Depends(get_db)):
-    verify_pin(pin)
-    db_category = models.Category(**category.dict())
-    db.add(db_category)
-    db.commit()
-    db.refresh(db_category)
-    return db_category
 
 @app.post("/api/ads", response_model=schemas.AdVideo)
 def create_ad(ad: schemas.AdVideoCreate, pin: str, db: Session = Depends(get_db)):

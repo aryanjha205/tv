@@ -16,23 +16,12 @@ async function login() {
     }
 }
 
-async function addCategory() {
-    const data = {
-        name: document.getElementById('cat-name').value,
-        order: parseInt(document.getElementById('cat-order').value) || 0
-    };
-    await apiPost('/api/categories', data);
-}
-
 async function addVideo() {
     const data = {
         title: document.getElementById('vid-title').value,
-        description: document.getElementById('vid-desc').value,
         url: document.getElementById('vid-url').value,
         type: document.getElementById('vid-type').value,
-        banner_url: document.getElementById('vid-banner').value,
-        category_id: parseInt(document.getElementById('vid-cat').value),
-        is_featured: document.getElementById('vid-featured').value === 'true'
+        playlist_order: parseInt(document.getElementById('vid-order').value) || 0
     };
     await apiPost('/api/videos', data);
 }
@@ -54,7 +43,6 @@ async function apiPost(url, data) {
         });
         if (res.ok) {
             alert('Success');
-            // Clear inputs naively for demo
             document.querySelectorAll('input[type=text]').forEach(i => i.value = '');
         } else {
             alert('Failed: ' + await res.text());

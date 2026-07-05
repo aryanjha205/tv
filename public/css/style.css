@@ -1,10 +1,6 @@
 :root {
-    --bg-color: #0f1014;
-    --text-primary: #ffffff;
-    --text-secondary: #a3a3a3;
+    --bg-color: #000;
     --accent: #e50914;
-    --glass-bg: rgba(20, 20, 20, 0.7);
-    --focus-border: 3px solid #ffffff;
     --transition: all 0.3s ease;
 }
 
@@ -16,176 +12,21 @@
 
 body {
     background-color: var(--bg-color);
-    color: var(--text-primary);
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    overflow-x: hidden;
+    overflow: hidden;
     user-select: none;
 }
 
-.screen {
-    display: none;
-    min-height: 100vh;
+#tv-screen {
     width: 100vw;
-}
-
-.screen.active {
-    display: block;
-}
-
-header {
-    position: fixed;
-    top: 0;
-    width: 100%;
-    padding: 20px 40px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
-    z-index: 100;
-}
-
-.logo {
-    font-size: 24px;
-    font-weight: bold;
-    color: var(--accent);
-}
-
-nav {
-    display: flex;
-    gap: 20px;
-}
-
-.nav-btn {
-    background: none;
-    border: none;
-    color: var(--text-secondary);
-    font-size: 16px;
-    cursor: pointer;
-    padding: 8px 12px;
-    transition: var(--transition);
-}
-
-.nav-btn:hover, .nav-btn:focus, .nav-btn.active {
-    color: var(--text-primary);
-    outline: none;
-    transform: scale(1.1);
-}
-
-/* Hero Section */
-.hero {
+    height: 100vh;
     position: relative;
-    height: 80vh;
-    background-size: cover;
-    background-position: center;
-    display: flex;
-    align-items: center;
-    padding: 0 40px;
-    background-image: linear-gradient(to right, rgba(15,16,20,1) 0%, rgba(15,16,20,0) 100%), url('https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=2070');
-}
-
-.hero::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 150px;
-    background: linear-gradient(to top, var(--bg-color), transparent);
-}
-
-.hero-content {
-    max-width: 600px;
-    z-index: 10;
-}
-
-.hero h1 {
-    font-size: 4rem;
-    margin-bottom: 10px;
-}
-
-.hero p {
-    font-size: 1.2rem;
-    color: var(--text-secondary);
-    margin-bottom: 20px;
-}
-
-.btn {
-    padding: 12px 24px;
-    font-size: 18px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: var(--transition);
-}
-
-.btn.primary {
-    background-color: var(--text-primary);
-    color: #000;
-}
-
-.btn.primary:hover, .btn.primary:focus {
-    background-color: rgba(255,255,255,0.7);
-    outline: var(--focus-border);
-}
-
-/* Horizontal Rows */
-.categories {
-    padding: 0 40px 40px;
-    margin-top: -50px;
-    position: relative;
-    z-index: 10;
-}
-
-.category-row {
-    margin-bottom: 40px;
-}
-
-.category-title {
-    font-size: 1.5rem;
-    margin-bottom: 15px;
-    font-weight: 500;
-}
-
-.row-container {
-    display: flex;
-    gap: 15px;
-    overflow-x: auto;
-    padding: 20px 0;
-    scroll-behavior: smooth;
-}
-
-.row-container::-webkit-scrollbar {
-    display: none;
-}
-
-.card {
-    flex: 0 0 250px;
-    height: 140px;
-    border-radius: 8px;
-    background-size: cover;
-    background-position: center;
-    cursor: pointer;
-    transition: var(--transition);
-    position: relative;
-    overflow: hidden;
-}
-
-.card:hover, .card:focus {
-    transform: scale(1.05);
-    z-index: 2;
-    outline: var(--focus-border);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-}
-
-/* Player Screen */
-#player-screen {
     background: #000;
 }
 
 #video-container {
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
 }
 
 #main-video {
@@ -194,28 +35,74 @@ nav {
     object-fit: cover;
 }
 
-.back-btn {
+/* Start Overlay for auto-play block */
+#start-overlay {
     position: absolute;
-    top: 20px;
-    left: 20px;
-    z-index: 100;
-    background: rgba(0,0,0,0.5);
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: black;
     color: white;
-    border: none;
-    padding: 10px 20px;
-    font-size: 18px;
-    border-radius: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    z-index: 2000;
     cursor: pointer;
-    backdrop-filter: blur(5px);
+}
+
+/* Channel Logo Bug */
+#channel-logo {
+    position: absolute;
+    top: 30px;
+    right: 40px;
+    width: 80px;
+    height: 80px;
+    opacity: 0.8;
+    z-index: 50;
+    pointer-events: none;
+}
+
+#channel-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+}
+
+/* Title Overlay */
+#now-playing {
+    position: absolute;
+    bottom: 50px;
+    left: 40px;
+    background: linear-gradient(to right, rgba(0,0,0,0.8), transparent);
+    padding: 15px 40px 15px 15px;
+    border-left: 5px solid var(--accent);
+    color: white;
+    z-index: 50;
+    pointer-events: none;
+    transition: opacity 1s ease;
+    opacity: 0; /* Hidden by default, shown briefly via JS */
+}
+
+#now-playing.visible {
+    opacity: 1;
+}
+
+#video-title {
+    font-size: 2rem;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
 }
 
 /* Ad Overlay */
 .ad-overlay {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
     background: #000;
     display: none;
     z-index: 1000;
@@ -238,10 +125,4 @@ nav {
     width: 100%;
     height: 100%;
     object-fit: cover;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .hero h1 { font-size: 2.5rem; }
-    .card { flex: 0 0 160px; height: 90px; }
 }

@@ -29,7 +29,7 @@ async function loadDashboard() {
         list.innerHTML = '';
         videos.forEach(v => {
             const li = document.createElement('li');
-            li.innerHTML = `<span>Order ${v.playlist_order}: <b>${v.title}</b> (${v.type})</span> <button class="danger" onclick="deleteVideo(${v.id})">Delete</button>`;
+            li.innerHTML = `<div class="info"><strong>${v.title}</strong><small>Order: ${v.playlist_order} • Type: ${v.type}</small></div> <button class="danger" onclick="deleteVideo(${v.id})">Delete</button>`;
             list.appendChild(li);
         });
     });
@@ -40,7 +40,7 @@ async function loadDashboard() {
         list.innerHTML = '';
         ads.forEach(ad => {
             const li = document.createElement('li');
-            li.innerHTML = `<span>Ad URL: ${ad.url}</span> <button class="danger" onclick="deleteAd(${ad.id})">Delete</button>`;
+            li.innerHTML = `<div class="info"><strong>Ad #${ad.id}</strong><small style="word-break: break-all; max-width: 200px;">${ad.url}</small></div> <button class="danger" onclick="deleteAd(${ad.id})">Delete</button>`;
             list.appendChild(li);
         });
     });

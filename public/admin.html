@@ -6,43 +6,235 @@
     <title>TV Channel Admin</title>
     <link rel="stylesheet" href="/css/style.css">
     <style>
-        body { background: #1a1a1a; padding: 20px; color: white; }
-        .admin-container { max-width: 800px; margin: 0 auto; background: #2a2a2a; padding: 20px; border-radius: 8px; }
-        input, select, button { display: block; width: 100%; margin-bottom: 15px; padding: 10px; border-radius: 4px; border: none; }
-        button { background: var(--accent); color: white; cursor: pointer; font-weight: bold; }
-        .hidden { display: none; }
+        body { 
+            background: linear-gradient(135deg, #0f1014 0%, #1a1a24 100%);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            font-family: 'Inter', 'Helvetica Neue', sans-serif;
+            margin: 0;
+        }
+
+        /* Glassmorphism Container */
+        .glass-panel {
+            background: rgba(30, 30, 40, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .login-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #login-section {
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        #login-section h2 { margin-bottom: 25px; color: var(--accent); font-size: 28px; }
+
+        .dashboard-wrapper {
+            padding: 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .dashboard-header h2 {
+            font-size: 2.5rem;
+            background: -webkit-linear-gradient(#fff, #a3a3a3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+        }
+
+        .card {
+            padding: 25px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(229, 9, 20, 0.2);
+        }
+
+        .card h3 {
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 10px;
+            display: inline-block;
+        }
+
+        input, select { 
+            display: block; 
+            width: 100%; 
+            margin-bottom: 15px; 
+            padding: 12px 15px; 
+            border-radius: 8px; 
+            border: 1px solid rgba(255,255,255,0.2); 
+            background: rgba(0,0,0,0.5);
+            color: white;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        button { 
+            background: var(--accent); 
+            color: white; 
+            cursor: pointer; 
+            font-weight: bold; 
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            width: 100%;
+            font-size: 16px;
+            transition: background 0.3s, transform 0.1s;
+        }
+
+        button:hover { background: #ff1a26; }
+        button:active { transform: scale(0.98); }
+        
+        button.danger { background: rgba(255, 68, 68, 0.1); color: #ff4444; border: 1px solid #ff4444; }
+        button.danger:hover { background: #ff4444; color: white; }
+        
+        button.outline { background: transparent; border: 2px solid var(--accent); color: var(--accent); width: auto;}
+        button.outline:hover { background: var(--accent); color: white; }
+
+        .hidden { display: none !important; }
+        
+        /* List Styles */
+        ul { list-style: none; padding: 0; margin-top: 15px; max-height: 300px; overflow-y: auto; padding-right: 10px;}
+        ul::-webkit-scrollbar { width: 8px; }
+        ul::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        
+        li { 
+            background: rgba(0,0,0,0.4); 
+            margin-bottom: 12px; 
+            padding: 15px; 
+            border-radius: 8px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-left: 3px solid transparent;
+            transition: border-color 0.3s;
+        }
+        li:hover { border-color: var(--accent); }
+        
+        li .info { display: flex; flex-direction: column; gap: 5px; }
+        li .info strong { font-size: 1.1rem; color: #fff; }
+        li .info small { color: #aaa; font-size: 0.9rem; }
+        li button { width: auto; margin: 0; padding: 8px 15px; font-size: 13px;}
     </style>
 </head>
 <body>
-    <div class="admin-container" id="login-section">
-        <h2>Admin Login</h2>
-        <input type="password" id="pin-input" placeholder="Enter PIN">
-        <button onclick="login()">Login</button>
+    <!-- Login Screen -->
+    <div class="login-wrapper hidden" id="login-section">
+        <div class="glass-panel" style="padding: 40px; width: 100%; max-width: 400px; text-align: center;">
+            <h2>Admin Login</h2>
+            <p style="margin-bottom: 25px; color: #aaa;">Enter your PIN to access the TV Dashboard</p>
+            <input type="password" id="pin-input" placeholder="Enter PIN">
+            <button onclick="login()">Access Dashboard</button>
+        </div>
     </div>
 
-    <div class="admin-container hidden" id="dashboard-section">
-        <h2>TV Channel Dashboard</h2>
-        <button onclick="window.location.href='/'">Go to TV Screen</button>
+    <!-- Main Dashboard -->
+    <div class="dashboard-wrapper hidden" id="dashboard-section">
+        <div class="dashboard-header">
+            <div>
+                <h2>TV Channel Operations</h2>
+                <p style="color: #aaa; margin-top: 5px;">Manage your linear TV stream in real-time</p>
+            </div>
+            <button class="outline" onclick="window.open('/', '_blank')">Live TV Preview 📺</button>
+        </div>
         
-        <hr>
-        <h3>Add Video to TV Playlist</h3>
-        <input type="text" id="vid-title" placeholder="Title (Displays on Screen)">
-        <input type="text" id="vid-url" placeholder="Video URL (HLS/MP4/DASH/YT)">
-        <select id="vid-type">
-            <option value="HLS">HLS</option>
-            <option value="MP4">MP4</option>
-            <option value="DASH">DASH</option>
-            <option value="YOUTUBE">YouTube</option>
-        </select>
-        <input type="number" id="vid-order" placeholder="Playlist Order (e.g. 1)">
-        <button onclick="addVideo()">Add to Playlist</button>
+        <div class="grid-container">
+            
+            <!-- Left Column: Add Forms -->
+            <div class="column">
+                
+                <div class="glass-panel card" style="margin-bottom: 30px;">
+                    <h3>Channel Branding</h3>
+                    <p style="margin-bottom: 15px; color: #aaa; font-size: 0.9rem;">Set the watermark logo shown in the top right corner.</p>
+                    <input type="text" id="logo-url" placeholder="Channel Logo URL (PNG/SVG)">
+                    <button onclick="updateLogo()">Update Branding</button>
+                </div>
 
-        <hr>
-        <h3>Add Advertisement (Runs every 5 mins)</h3>
-        <input type="text" id="ad-url" placeholder="Ad Video URL">
-        <button onclick="addAd()">Add Advertisement</button>
+                <div class="glass-panel card" style="margin-bottom: 30px;">
+                    <h3>Add to Playlist</h3>
+                    <p style="margin-bottom: 15px; color: #aaa; font-size: 0.9rem;">Schedule a new video to play on the channel.</p>
+                    <input type="text" id="vid-title" placeholder="Title (Displays on Screen)">
+                    <input type="text" id="vid-url" placeholder="Video URL (HLS/MP4/DASH/YT)">
+                    <select id="vid-type">
+                        <option value="HLS">HLS (M3U8)</option>
+                        <option value="MP4">Native MP4</option>
+                        <option value="DASH">DASH</option>
+                        <option value="YOUTUBE">YouTube</option>
+                    </select>
+                    <input type="number" id="vid-order" placeholder="Playlist Order (e.g. 1)">
+                    <button onclick="addVideo()">Schedule Video</button>
+                </div>
+
+                <div class="glass-panel card">
+                    <h3>Inject Advertisement</h3>
+                    <p style="margin-bottom: 15px; color: #aaa; font-size: 0.9rem;">Ads are randomly selected and played every 5 minutes.</p>
+                    <input type="text" id="ad-url" placeholder="Ad Video URL (MP4)">
+                    <button onclick="addAd()">Add Advertisement</button>
+                </div>
+            </div>
+
+            <!-- Right Column: Lists -->
+            <div class="column">
+                
+                <div class="glass-panel card" style="margin-bottom: 30px; height: 450px; display: flex; flex-direction: column;">
+                    <h3>Current Playlist Queue</h3>
+                    <ul id="playlist-list" style="flex-grow: 1;">
+                        <!-- JS injected -->
+                    </ul>
+                </div>
+
+                <div class="glass-panel card" style="height: 300px; display: flex; flex-direction: column;">
+                    <h3>Active Advertisements</h3>
+                    <ul id="ads-list" style="flex-grow: 1;">
+                        <!-- JS injected -->
+                    </ul>
+                </div>
+
+            </div>
+            
+        </div>
     </div>
 
     <script src="/js/admin.js"></script>
+    <script>
+        // Init logic to show login
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById('login-section').classList.remove('hidden');
+        });
+    </script>
 </body>
 </html>

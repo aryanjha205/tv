@@ -29,3 +29,11 @@ class AdVideo(AdVideoBase):
 
     class Config:
         from_attributes = True
+
+class SettingBase(BaseModel):
+    key: str
+    value: str
+
+class Setting(SettingBase):
+    class Config:
+        from_attributes = True

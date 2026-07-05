@@ -25,3 +25,9 @@ class Analytics(Base):
     video_id = Column(Integer)
     views = Column(Integer, default=0)
     watch_time_seconds = Column(Integer, default=0)
+
+class Setting(Base):
+    __tablename__ = "settings"
+
+    key = Column(String, primary_key=True, index=True)
+    value = Column(String)

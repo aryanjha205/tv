@@ -16,7 +16,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Dependency
 def get_db():
     db = database.SessionLocal()
     try:
@@ -24,6 +23,7 @@ def get_db():
     finally:
         db.close()
 
+# Public GET Endpoints
 @app.get("/api/videos", response_model=List[schemas.Video])
 def read_videos(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     videos = db.query(models.Video).order_by(models.Video.playlist_order).offset(skip).limit(limit).all()
@@ -34,6 +34,13 @@ def read_ads(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     ads = db.query(models.AdVideo).filter(models.AdVideo.active == True).offset(skip).limit(limit).all()
     return ads
 
+@app.get("/api/settings/{key}", response_model=schemas.Setting)
+def read_setting(key: str, db: Session = Depends(get_db)):
+    setting = db.query(models.Setting).filter(models.Setting.key == key).first()
+    if not setting:
+        return {"key": key, "value": ""} # Return empty if not found
+    return setting
+
 # Admin endpoints (protected by PIN 4333)
 def verify_pin(pin: str):
     if pin != "4333":
@@ -43,6 +50,19 @@ def verify_pin(pin: str):
 def admin_login(pin: str):
     verify_pin(pin)
     return {"status": "ok"}
+
+@app.post("/api/settings", response_model=schemas.Setting)
+def update_setting(setting: schemas.SettingBase, pin: str, db: Session = Depends(get_db)):
+    verify_pin(pin)
+    db_setting = db.query(models.Setting).filter(models.Setting.key == setting.key).first()
+    if db_setting:
+        db_setting.value = setting.value
+    else:
+        db_setting = models.Setting(key=setting.key, value=setting.value)
+        db.add(db_setting)
+    db.commit()
+    db.refresh(db_setting)
+    return db_setting
 
 @app.post("/api/videos", response_model=schemas.Video)
 def create_video(video: schemas.VideoCreate, pin: str, db: Session = Depends(get_db)):
@@ -68,5 +88,14 @@ def delete_video(video_id: int, pin: str, db: Session = Depends(get_db)):
     video = db.query(models.Video).filter(models.Video.id == video_id).first()
     if video:
         db.delete(video)
+        db.commit()
+    return {"status": "deleted"}
+
+@app.delete("/api/ads/{ad_id}")
+def delete_ad(ad_id: int, pin: str, db: Session = Depends(get_db)):
+    verify_pin(pin)
+    ad = db.query(models.AdVideo).filter(models.AdVideo.id == ad_id).first()
+    if ad:
+        db.delete(ad)
         db.commit()
     return {"status": "deleted"}

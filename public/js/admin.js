@@ -8,6 +8,7 @@ async function login() {
             currentPin = pin;
             document.getElementById('login-section').classList.add('hidden');
             document.getElementById('dashboard-section').classList.remove('hidden');
+            loadDashboard();
         } else {
             alert('Invalid PIN');
         }
@@ -16,22 +17,66 @@ async function login() {
     }
 }
 
+async function loadDashboard() {
+    // Load Settings (Logo)
+    fetch('/api/settings/logo_url').then(res => res.json()).then(data => {
+        if (data && data.value) document.getElementById('logo-url').value = data.value;
+    });
+
+    // Load Playlist
+    fetch('/api/videos').then(res => res.json()).then(videos => {
+        const list = document.getElementById('playlist-list');
+        list.innerHTML = '';
+        videos.forEach(v => {
+            const li = document.createElement('li');
+            li.innerHTML = `<span>Order ${v.playlist_order}: <b>${v.title}</b> (${v.type})</span> <button class="danger" onclick="deleteVideo(${v.id})">Delete</button>`;
+            list.appendChild(li);
+        });
+    });
+
+    // Load Ads
+    fetch('/api/ads').then(res => res.json()).then(ads => {
+        const list = document.getElementById('ads-list');
+        list.innerHTML = '';
+        ads.forEach(ad => {
+            const li = document.createElement('li');
+            li.innerHTML = `<span>Ad URL: ${ad.url}</span> <button class="danger" onclick="deleteAd(${ad.id})">Delete</button>`;
+            list.appendChild(li);
+        });
+    });
+}
+
+async function updateLogo() {
+    await apiPost('/api/settings', {
+        key: 'logo_url',
+        value: document.getElementById('logo-url').value
+    });
+}
+
 async function addVideo() {
-    const data = {
+    await apiPost('/api/videos', {
         title: document.getElementById('vid-title').value,
         url: document.getElementById('vid-url').value,
         type: document.getElementById('vid-type').value,
         playlist_order: parseInt(document.getElementById('vid-order').value) || 0
-    };
-    await apiPost('/api/videos', data);
+    });
 }
 
 async function addAd() {
-    const data = {
+    await apiPost('/api/ads', {
         url: document.getElementById('ad-url').value,
         active: true
-    };
-    await apiPost('/api/ads', data);
+    });
+}
+
+async function deleteVideo(id) {
+    if(!confirm('Delete video?')) return;
+    await apiDelete(`/api/videos/${id}`);
+}
+
+async function deleteAd(id) {
+    if(!confirm('Delete ad?')) return;
+    await apiDelete(`/api/ads/${id}`);
 }
 
 async function apiPost(url, data) {
@@ -43,12 +88,24 @@ async function apiPost(url, data) {
         });
         if (res.ok) {
             alert('Success');
-            document.querySelectorAll('input[type=text]').forEach(i => i.value = '');
+            loadDashboard();
         } else {
             alert('Failed: ' + await res.text());
         }
     } catch (e) {
-        console.error(e);
+        alert('Error occurred');
+    }
+}
+
+async function apiDelete(url) {
+    try {
+        const res = await fetch(`${url}?pin=${currentPin}`, { method: 'DELETE' });
+        if (res.ok) {
+            loadDashboard();
+        } else {
+            alert('Delete failed');
+        }
+    } catch (e) {
         alert('Error occurred');
     }
 }

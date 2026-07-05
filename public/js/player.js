@@ -9,13 +9,19 @@ let isAdPlaying = false;
 let adTimerInterval = null;
 let tvStarted = false;
 
-// 1. Fetch Playlist & Ads
+// 1. Fetch Playlist, Ads, and Logo
 Promise.all([
     fetch('/api/videos').then(res => res.json()),
-    fetch('/api/ads').then(res => res.json())
-]).then(([videos, ads]) => {
+    fetch('/api/ads').then(res => res.json()),
+    fetch('/api/settings/logo_url').then(res => res.json())
+]).then(([videos, ads, logo]) => {
     playlist = videos;
     adList = ads;
+    
+    // Set dynamic logo
+    if (logo && logo.value) {
+        document.querySelector('#channel-logo img').src = logo.value;
+    }
 });
 
 function startTV() {

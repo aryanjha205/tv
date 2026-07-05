@@ -1,10 +1,9 @@
-const CACHE_NAME = 'ott-pwa-cache-v1';
+const CACHE_NAME = 'ott-pwa-cache-v2';
 const urlsToCache = [
     '/',
     '/index.html',
     '/admin.html',
     '/css/style.css',
-    '/js/app.js',
     '/js/player.js',
     '/js/admin.js'
 ];
@@ -32,5 +31,13 @@ self.addEventListener('fetch', event => {
                 }
                 return fetch(event.request);
             })
+    );
+});
+
+self.addEventListener('activate', event => {
+    event.waitUntil(
+        caches.keys().then(names => Promise.all(
+            names.filter(name => name !== CACHE_NAME).map(name => caches.delete(name))
+        ))
     );
 });

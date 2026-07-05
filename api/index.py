@@ -2,7 +2,10 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from . import models, schemas, database
+import os
 
 models.Base.metadata.create_all(bind=database.engine)
 
@@ -15,6 +18,26 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Serve static files locally
+app.mount("/css", StaticFiles(directory="public/css"), name="css")
+app.mount("/js", StaticFiles(directory="public/js"), name="js")
+
+@app.get("/")
+async def read_index():
+    return FileResponse("public/index.html")
+
+@app.get("/admin.html")
+async def read_admin():
+    return FileResponse("public/admin.html")
+
+@app.get("/manifest.json")
+async def read_manifest():
+    return FileResponse("public/manifest.json")
+
+@app.get("/sw.js")
+async def read_sw():
+    return FileResponse("public/sw.js")
 
 def get_db():
     db = database.SessionLocal()

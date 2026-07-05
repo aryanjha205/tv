@@ -8,6 +8,8 @@ let adVideo = document.getElementById('ad-video');
 let isAdPlaying = false;
 let adTimerInterval = null;
 let tvStarted = false;
+let hlsPlayer = null;
+let dashPlayer = null;
 
 // 1. Fetch Playlist, Ads, and Logo
 function fetchContent() {
@@ -98,20 +100,48 @@ function nextVideo() {
 
 // HTML5 Video / HLS / DASH logic
 function playNative(video) {
-    if (Hls.isSupported() && video.type === 'HLS') {
-        var hls = new Hls();
-        hls.loadSource(video.url);
-        hls.attachMedia(mainVideo);
-        hls.on(Hls.Events.MANIFEST_PARSED, function() {
-            mainVideo.play();
+    destroyNativePlayers();
+    mainVideo.removeAttribute('src');
+    mainVideo.load();
+
+    if (typeof Hls !== 'undefined' && Hls.isSupported() && video.type === 'HLS') {
+        hlsPlayer = new Hls();
+        hlsPlayer.loadSource(video.url);
+        hlsPlayer.attachMedia(mainVideo);
+        hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function() {
+            safePlay(mainVideo);
+        });
+        hlsPlayer.on(Hls.Events.ERROR, function(_event, data) {
+            if (data.fatal) showPlaybackError('This HLS stream could not be loaded.');
         });
     } else if (typeof dashjs !== 'undefined' && video.type === 'DASH') {
-        var player = dashjs.MediaPlayer().create();
-        player.initialize(mainVideo, video.url, true);
+        dashPlayer = dashjs.MediaPlayer().create();
+        dashPlayer.initialize(mainVideo, video.url, true);
     } else {
         mainVideo.src = video.url;
-        mainVideo.play();
+        safePlay(mainVideo);
     }
+}
+
+function destroyNativePlayers() {
+    if (hlsPlayer) {
+        hlsPlayer.destroy();
+        hlsPlayer = null;
+    }
+    if (dashPlayer) {
+        dashPlayer.reset();
+        dashPlayer = null;
+    }
+}
+
+function safePlay(element) {
+    const result = element.play();
+    if (result) result.catch(() => showPlaybackError('Playback was blocked. Tap the screen and try again.'));
+}
+
+function showPlaybackError(message) {
+    document.getElementById('video-title').innerText = message;
+    showTitleOverlay();
 }
 
 // When Native video ends, play next
@@ -121,9 +151,17 @@ mainVideo.addEventListener('ended', () => {
 
 // YouTube Logic
 function playYouTube(url) {
-    let videoId = url.split('v=')[1] || url.split('/').pop();
-    const ampersandPosition = videoId.indexOf('&');
-    if (ampersandPosition !== -1) videoId = videoId.substring(0, ampersandPosition);
+    const videoId = getYouTubeVideoId(url);
+    if (!videoId) {
+        showPlaybackError('Invalid YouTube URL.');
+        return;
+    }
+
+    if (typeof YT === 'undefined' || typeof YT.Player === 'undefined') {
+        document.getElementById('video-title').innerText = 'Loading YouTube player...';
+        showTitleOverlay();
+        return;
+    }
 
     if (!ytPlayer) {
         ytPlayer = new YT.Player('youtube-player', {
@@ -131,6 +169,7 @@ function playYouTube(url) {
             playerVars: { 'autoplay': 1, 'controls': 0, 'disablekb': 1, 'modestbranding': 1 },
             events: {
                 'onReady': (event) => event.target.playVideo(),
+                'onError': () => showPlaybackError('This YouTube video cannot be played here.'),
                 'onStateChange': (event) => {
                     if (event.data === YT.PlayerState.ENDED) {
                         nextVideo();
@@ -142,6 +181,28 @@ function playYouTube(url) {
         ytPlayer.loadVideoById(videoId);
     }
 }
+
+function getYouTubeVideoId(value) {
+    try {
+        const url = new URL(value);
+        let id = '';
+
+        if (url.hostname === 'youtu.be' || url.hostname === 'www.youtu.be') {
+            id = url.pathname.split('/').filter(Boolean)[0] || '';
+        } else if (url.hostname.endsWith('youtube.com')) {
+            if (url.pathname === '/watch') id = url.searchParams.get('v') || '';
+            else id = url.pathname.split('/').filter(Boolean).pop() || '';
+        }
+
+        return /^[a-zA-Z0-9_-]{11}$/.test(id) ? id : null;
+    } catch (_error) {
+        return /^[a-zA-Z0-9_-]{11}$/.test(value) ? value : null;
+    }
+}
+
+mainVideo.addEventListener('error', () => {
+    showPlaybackError('This video could not be loaded. Check its URL and CORS settings.');
+});
 
 function showTitleOverlay() {
     const el = document.getElementById('now-playing');
@@ -197,5 +258,7 @@ function endAd() {
 }
 
 function onYouTubeIframeAPIReady() {
-    // API ready
+    if (tvStarted && playlist[currentVideoIndex]?.type === 'YOUTUBE') {
+        playYouTube(playlist[currentVideoIndex].url);
+    }
 }
